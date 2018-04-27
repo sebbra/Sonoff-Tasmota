@@ -468,8 +468,7 @@ void BmpShow(boolean json)
       if (0 == tele_period) {
         DomoticzTempHumPressureSensor(temperature, humidity, pressure);
 #ifdef USE_BME680
-        if (bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, gas_resistance); }
-//        if (bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (char *)gas_resistance); }
+        if (bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)g); }
 #endif  // USE_BME680
       }
 #endif // USE_DOMOTICZ
