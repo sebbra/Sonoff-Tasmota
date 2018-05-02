@@ -185,6 +185,7 @@ enum SupportedModules {
   SONOFF_S31,
   ZENGGE_ZF_WF017,
   SONOFF_POW_R2,
+  SP1,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -245,7 +246,8 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,
   WEMOS,
-  WITTY
+  WITTY,
+  SP1
 };
 
 // Default module settings
@@ -820,7 +822,20 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
-  }
+  },
+  { "SP1",              // Gosund SP1 
+     GPIO_LED1_INV,     // GPIO00 Led red
+     0,                 // GPIO01 nc
+     GPIO_LED2_INV,     // GPIO02 Led blue
+     0, 0,              // GPIO03, GPIO04 nc (03 -> RX)
+     GPIO_HLW_CF,       // GPIO05 BL0937 CF output
+     0, 0, 0, 0, 0, 0,  // Flash connection (GPIO6-11)
+     GPIO_HLW_SEL,      // GPIO12 BL0937 SEL
+     GPIO_KEY1,         // GPIO13 Button
+     GPIO_HLW_CF1,      // GPIO14 BL0937 CF1 voltage / current
+     GPIO_REL1,         // GPIO15 Relay (0 = On, 1 = Off)
+     0, 0
+  } 
 };
 
 /*

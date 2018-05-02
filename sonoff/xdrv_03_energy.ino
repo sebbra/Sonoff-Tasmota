@@ -26,7 +26,7 @@
 
 #define FEATURE_POWER_LIMIT  true
 
-enum EnergyHardware { ENERGY_NONE, ENERGY_HLW8012, ENERGY_CSE7766, ENERGY_PZEM004T };
+enum EnergyHardware { ENERGY_NONE, ENERGY_HLW8012, ENERGY_CSE7766, ENERGY_PZEM004T, ENERGY_BL0937 };
 
 enum EnergyCommands {
   CMND_POWERDELTA,
@@ -190,7 +190,12 @@ void HlwEvery200ms()
   if (hlw_cf1_timer >= 8) {
     hlw_cf1_timer = 0;
     hlw_select_ui_flag = (hlw_select_ui_flag) ? 0 : 1;
-    digitalWrite(pin[GPIO_HLW_SEL], hlw_select_ui_flag);
+    
+    if (ENERGY_BL0937 == energy_flg){    // GOSUND SP1
+      digitalWrite(pin[GPIO_HLW_SEL], !hlw_select_ui_flag);
+    }else{
+      digitalWrite(pin[GPIO_HLW_SEL], hlw_select_ui_flag);
+    } 
 
     if (hlw_cf1_pulse_counter) {
       hlw_cf1_pulse_length = hlw_cf1_summed_pulse_length / hlw_cf1_pulse_counter;
@@ -231,6 +236,12 @@ void HlwInit()
     Settings.energy_power_calibration = HLW_PREF_PULSE;
     Settings.energy_voltage_calibration = HLW_UREF_PULSE;
     Settings.energy_current_calibration = HLW_IREF_PULSE;
+
+    if (ENERGY_BL0937 == energy_flg){
+      Settings.energy_power_calibration = 741;
+      Settings.energy_voltage_calibration = 863;
+      Settings.energy_current_calibration = 2540;
+    }
   }
 
   hlw_cf_pulse_length = 0;
@@ -247,8 +258,11 @@ void HlwInit()
 
   hlw_select_ui_flag = 0;  // Voltage;
 
-  pinMode(pin[GPIO_HLW_SEL], OUTPUT);
-  digitalWrite(pin[GPIO_HLW_SEL], hlw_select_ui_flag);
+  if (ENERGY_BL0937 == energy_flg){    // GOSUND SP1
+      digitalWrite(pin[GPIO_HLW_SEL], !hlw_select_ui_flag);
+  }else{
+      digitalWrite(pin[GPIO_HLW_SEL], hlw_select_ui_flag);
+  }  
   pinMode(pin[GPIO_HLW_CF1], INPUT_PULLUP);
   attachInterrupt(pin[GPIO_HLW_CF1], HlwCf1Interrupt, FALLING);
   pinMode(pin[GPIO_HLW_CF], INPUT_PULLUP);
@@ -580,6 +594,7 @@ void Energy200ms()
     energy_fifth_second = 0;
 
     if (ENERGY_HLW8012 == energy_flg) HlwEverySecond();
+    if (ENERGY_BL0937  == energy_flg) HlwEverySecond();
     if (ENERGY_CSE7766 == energy_flg) CseEverySecond();
 
     if (RtcTime.valid) {
@@ -602,6 +617,7 @@ void Energy200ms()
   energy_power_on = (power &1) | Settings.flag.no_power_on_check;
 
   if (ENERGY_HLW8012 == energy_flg) HlwEvery200ms();
+  if (ENERGY_BL0937  == energy_flg) HlwEvery200ms();
 #ifdef USE_PZEM004T
   if (ENERGY_PZEM004T == energy_flg) PzemEvery200ms();
 #endif  // USE_PZEM004T
@@ -885,16 +901,16 @@ boolean EnergyCommand()
     status_flag = 1;
   }
 
-  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg)) && (CMND_POWERCAL == command_code)) {
+  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg) || (ENERGY_BL0937 == energy_flg)) && (CMND_POWERCAL == command_code)) {
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 32001)) {
-      Settings.energy_power_calibration = (XdrvMailbox.payload > 4000) ? XdrvMailbox.payload : HLW_PREF_PULSE;  // HLW = 12530, CSE = 5364
+      Settings.energy_power_calibration = (XdrvMailbox.payload > 1000) ? XdrvMailbox.payload : HLW_PREF_PULSE;  // HLW = 12530, CSE = 5364
     }
     nvalue = Settings.energy_power_calibration;
     unit = UNIT_MICROSECOND;
   }
-  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg)) && (CMND_POWERSET == command_code)) {  // Watt
+  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg) || (ENERGY_BL0937 == energy_flg)) && (CMND_POWERSET == command_code)) {  // Watt
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 3601)) {
-      if ((ENERGY_HLW8012 == energy_flg) && hlw_cf_pulse_length) {
+      if (((ENERGY_HLW8012 == energy_flg)||(ENERGY_BL0937 == energy_flg)) && hlw_cf_pulse_length) {
         Settings.energy_power_calibration = (XdrvMailbox.payload * 10 * hlw_cf_pulse_length) / HLW_PREF;
       }
       else if ((ENERGY_CSE7766 == energy_flg) && power_cycle) {
@@ -905,16 +921,16 @@ boolean EnergyCommand()
     nvalue = Settings.energy_power_calibration;
     unit = UNIT_MICROSECOND;
   }
-  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg)) && (CMND_VOLTAGECAL == command_code)) {
+  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg) || (ENERGY_BL0937 == energy_flg)) && (CMND_VOLTAGECAL == command_code)) {
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 32001)) {
-      Settings.energy_voltage_calibration = (XdrvMailbox.payload > 999) ? XdrvMailbox.payload : HLW_UREF_PULSE;  // HLW = 1950, CSE = 1912
+      Settings.energy_voltage_calibration = (XdrvMailbox.payload > 500) ? XdrvMailbox.payload : HLW_UREF_PULSE;  // HLW = 1950, CSE = 1912
     }
     nvalue = Settings.energy_voltage_calibration;
     unit = UNIT_MICROSECOND;
   }
-  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg)) && (CMND_VOLTAGESET == command_code)) {  // Volt
+  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg) || (ENERGY_BL0937 == energy_flg)) && (CMND_VOLTAGESET == command_code)) {  // Volt
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 501)) {
-      if ((ENERGY_HLW8012 == energy_flg) && hlw_cf1_voltage_pulse_length) {
+      if (((ENERGY_HLW8012 == energy_flg)||(ENERGY_BL0937 == energy_flg)) && hlw_cf1_voltage_pulse_length) {
         Settings.energy_voltage_calibration = (XdrvMailbox.payload * 10 * hlw_cf1_voltage_pulse_length) / HLW_UREF;
       }
       else if ((ENERGY_CSE7766 == energy_flg) && voltage_cycle) {
@@ -925,16 +941,16 @@ boolean EnergyCommand()
     nvalue = Settings.energy_voltage_calibration;
     unit = UNIT_MICROSECOND;
   }
-  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg)) && (CMND_CURRENTCAL == command_code)) {
+  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg) || (ENERGY_BL0937 == energy_flg)) && (CMND_CURRENTCAL == command_code)) {
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 32001)) {
       Settings.energy_current_calibration = (XdrvMailbox.payload > 1100) ? XdrvMailbox.payload : HLW_IREF_PULSE;  // HLW = 3500, CSE = 16140
     }
     nvalue = Settings.energy_current_calibration;
     unit = UNIT_MICROSECOND;
   }
-  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg)) && (CMND_CURRENTSET == command_code)) {  // milliAmpere
+  else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg) || (ENERGY_BL0937 == energy_flg)) && (CMND_CURRENTSET == command_code)) {  // milliAmpere
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 16001)) {
-      if ((ENERGY_HLW8012 == energy_flg) && hlw_cf1_current_pulse_length) {
+      if (((ENERGY_HLW8012 == energy_flg)||(ENERGY_BL0937 == energy_flg)) && hlw_cf1_current_pulse_length) {
         Settings.energy_current_calibration = (XdrvMailbox.payload * hlw_cf1_current_pulse_length) / HLW_IREF;
       }
       else if ((ENERGY_CSE7766 == energy_flg) && current_cycle) {
@@ -1024,7 +1040,11 @@ void EnergyDrvInit()
 {
   energy_flg = ENERGY_NONE;
   if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // Sonoff Pow or any HLW8012 based device
-    energy_flg = ENERGY_HLW8012;
+    if (pin[GPIO_HLW_SEL] == 12){    // Must be SP1
+      energy_flg = ENERGY_BL0937;
+    }else{
+      energy_flg = ENERGY_HLW8012;
+    }
   } else if ((SONOFF_S31 == Settings.module) || (SONOFF_POW_R2 == Settings.module)) {     // Sonoff S31 or Sonoff Pow R2
     baudrate = 4800;
     serial_config = SERIAL_8E1;
@@ -1038,7 +1058,7 @@ void EnergyDrvInit()
 
 void EnergySnsInit()
 {
-  if (ENERGY_HLW8012 == energy_flg) HlwInit();
+  if ((ENERGY_HLW8012 == energy_flg) || (ENERGY_BL0937 == energy_flg)) HlwInit();
 
 #ifdef USE_PZEM004T
   if ((ENERGY_PZEM004T == energy_flg) && !PzemInit()) {  // PzemInit needs to be done here as earlier (serial) interrupts may lead to Exceptions
