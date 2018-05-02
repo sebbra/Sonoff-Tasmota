@@ -903,7 +903,7 @@ boolean EnergyCommand()
 
   else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg) || (ENERGY_BL0937 == energy_flg)) && (CMND_POWERCAL == command_code)) {
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 32001)) {
-      Settings.energy_power_calibration = (XdrvMailbox.payload > 1000) ? XdrvMailbox.payload : HLW_PREF_PULSE;  // HLW = 12530, CSE = 5364
+      Settings.energy_power_calibration = (XdrvMailbox.payload > 500) ? XdrvMailbox.payload : HLW_PREF_PULSE;  // HLW = 12530, CSE = 5364
     }
     nvalue = Settings.energy_power_calibration;
     unit = UNIT_MICROSECOND;
