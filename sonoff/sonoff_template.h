@@ -824,9 +824,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0
   },
   { "SP1",              // Gosund SP1 
-     GPIO_LED1_INV,     // GPIO00 Led red
+     GPIO_USER,         // GPIO00 Led red
      0,                 // GPIO01 nc
-     GPIO_LED2_INV,     // GPIO02 Led blue
+     GPIO_USER,         // GPIO02 Led blue
      0, 0,              // GPIO03, GPIO04 nc (03 -> RX)
      GPIO_HLW_CF,       // GPIO05 BL0937 CF output
      0, 0, 0, 0, 0, 0,  // Flash connection (GPIO6-11)
