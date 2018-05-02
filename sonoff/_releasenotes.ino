@@ -1,4 +1,9 @@
-/* 5.13.0 20180427
+/* 5.13.0a
+ * Fix JSON buffers size too small for execution in some situations (#2580)
+ * Add define MODULE for user selecting default model although it preferably should not be changed (#569, #2589)
+ * Fix configuration restore (#2591)
+ *
+ * 5.13.0 20180430
  * Change platformio option sonoff-ds18x20 to sonoff-allsensors enabling ds18x20 and all other sensors in one image
  * Change status display of Ssid and SetOption
  * Change default option SetOption15 from 0 to 1 providing better initial PWM experience
@@ -12,17 +17,37 @@
  * Change user_config_override usage by providing user_config_override_sample.h (#2228)
  * Change MQTT response topic for Energy changes from ENERGY to SENSOR (#2229, #2251)
  * Change default Reset configuration time from 4 seconds to 40 seconds on Button hold (#2268)
+ * Change ESP8266 Analog JSON message from {"Analog0:123"} to {"ANALOG":{"A0:123"}} to accomodate rules (#2560)
+ * Change Counter JSON message from {"Counter1":0,"Counter3":0} to {"COUNTER":{"C1":0,"C3":0}} to accomodate rules
+ * Change ADS1115 JSON message from {"ADS1115":{"Analog0":123,"Analog1":123}} to {"ADS1115":{"A0":123,"A1":123}}
  * Fix intermittent exception when dns lookup is used while sleep is enabled
  * Fix 5.4.0 regression turning off single press after button hold during 4x hold time
  * Fix possible wifi connection problem by erasing sdk configuration parameters
+<<<<<<< .mine
  * Fix MAX31850 higher temperatures (#1269)
  * Fix freeing more code space when emulation is disabled (#1592)
  * Fix providing web page configuratin option for Friendly Name when no device (relay or light) is configured (#1850)
  * Fix compile error when define HOME_ASSISTANT_DISCOVERY_ENABLE is not set (#1937)
+=======
+ * Fix NTP sync to Thu Jan 01 08:00:10 1970 results in uptime 17651+ days (core2.4.1/sdk2.2.1)
+ * Fix MAX31850 higher temperatures (#1269)
+ * Fix freeing more code space when emulation is disabled (#1592)
+ * Fix providing web page configuratin option for Friendly Name when no device (relay or light) is configured (#1850)
+>>>>>>> .theirs
+ * Fix compile error when define HOME_ASSISTANT_DISCOVERY_ENABLE is not set (#1937)
+<<<<<<< .mine
+ * Fix update temperature on DS18x20 drivers (#2328)
+ * Fix compile error when not defined USE_TIMERS (#2400)
+ * Fix configuration filename truncation when it contains spaces (#2484, #2490)
+
+
+=======
  * Fix MQTT TLS fingerprint validation (#2033)
  * Fix update temperature on DS18x20 drivers (#2328)
  * Fix compile error when not defined USE_TIMERS (#2400)
  * Fix configuration filename truncation when it contains spaces (#2484, #2490)
+ * Fix Energy Today and Yesterday overflow (#2543)
+>>>>>>> .theirs
  * Add serial debug info
  * Add Portuguese language file
  * Add Czech language file
