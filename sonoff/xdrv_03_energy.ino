@@ -257,7 +257,8 @@ void HlwInit()
   hlw_energy_period_counter = 0;
 
   hlw_select_ui_flag = 0;  // Voltage;
-
+  
+  pinMode(pin[GPIO_HLW_SEL], OUTPUT);
   if (ENERGY_BL0937 == energy_flg){    // GOSUND SP1
       digitalWrite(pin[GPIO_HLW_SEL], !hlw_select_ui_flag);
   }else{
