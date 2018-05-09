@@ -447,6 +447,29 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
+int GetStateNumber(char *state_text)
+{
+  char command[CMDSZ];
+  int state_number = -1;
+
+  if ((GetCommandCode(command, sizeof(command), state_text, kOptionOff) >= 0) || !strcasecmp(state_text, Settings.state_text[0])) {
+    state_number = 0;
+  }
+  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionOn) >= 0) || !strcasecmp(state_text, Settings.state_text[1])) {
+    state_number = 1;
+  }
+  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionToggle) >= 0) || !strcasecmp(state_text, Settings.state_text[2])) {
+    state_number = 2;
+  }
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionBlink) >= 0) {
+    state_number = 3;
+  }
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionBlinkOff) >= 0) {
+    state_number = 4;
+  }
+  return state_number;
+}
+
 void SetSerialBaudrate(int baudrate)
 {
   Settings.baudrate = baudrate / 1200;
@@ -460,6 +483,14 @@ void SetSerialBaudrate(int baudrate)
     Serial.begin(baudrate, serial_config);
     delay(10);
     Serial.println();
+  }
+}
+
+void SetSerialLocal(bool slocal)
+{
+  serial_local = slocal;
+  if (slocal) {
+    SetSeriallog(LOG_LEVEL_NONE);
   }
 }
 
@@ -1400,6 +1431,7 @@ uint16_t AdcRead()
   return analog;
 }
 
+#ifdef USE_RULES
 void AdcEvery50ms()
 {
   adc_counter++;
@@ -1413,6 +1445,7 @@ void AdcEvery50ms()
     }
   }
 }
+#endif  // USE_RULES
 
 void AdcShow(boolean json)
 {
@@ -1439,9 +1472,11 @@ boolean Xsns02(byte function)
 
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
+#ifdef USE_RULES
       case FUNC_EVERY_50_MSECOND:
         AdcEvery50ms();
         break;
+#endif  // USE_RULES
       case FUNC_JSON_APPEND:
         AdcShow(1);
         break;

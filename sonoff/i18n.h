@@ -90,6 +90,7 @@
 #define D_JSON_PRESSUREATSEALEVEL "SeaPressure"
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
+#define D_JSON_RESET "Reset"
 #define D_JSON_RESTARTING "Restarting"
 #define D_JSON_RESTARTREASON "RestartReason"
 #define D_JSON_RSSI "RSSI"
@@ -485,6 +486,12 @@ const char kPrefixes[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
 
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;
+
+const char kOptionOff[] PROGMEM = "OFF|" D_OFF "|" D_FALSE "|" D_STOP "|" D_CELSIUS ;
+const char kOptionOn[] PROGMEM = "ON|" D_ON "|" D_TRUE "|" D_START "|" D_FAHRENHEIT "|" D_USER ;
+const char kOptionToggle[] PROGMEM = "TOGGLE|" D_TOGGLE "|" D_ADMIN ;
+const char kOptionBlink[] PROGMEM = "BLINK|" D_BLINK ;
+const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
 
 // webserver.ino
 #ifdef USE_WEBSERVER

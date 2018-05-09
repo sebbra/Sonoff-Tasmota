@@ -96,16 +96,11 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER;
 
-const char kOptionOff[] PROGMEM = "OFF|" D_OFF "|" D_FALSE "|" D_STOP "|" D_CELSIUS ;
-const char kOptionOn[] PROGMEM = "ON|" D_ON "|" D_TRUE "|" D_START "|" D_FAHRENHEIT "|" D_USER ;
-const char kOptionToggle[] PROGMEM = "TOGGLE|" D_TOGGLE "|" D_ADMIN ;
-const char kOptionBlink[] PROGMEM = "BLINK|" D_BLINK ;
-const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
-
 // Global variables
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
 byte serial_in_byte;                        // Received byte
+uint8_t serial_local = 0;                   // Handle serial locally;
 unsigned long serial_polling_window = 0;    // Serial polling window
 int serial_in_byte_counter = 0;             // Index in receive buffer
 byte dual_hex_code = 0;                     // Sonoff dual input flag
@@ -436,38 +431,41 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     backlog_delay = MIN_BACKLOG_DELAY;   // Reset backlog delay
 
-    if ((GetCommandCode(command, sizeof(command), dataBuf, kOptionOff) >= 0) || !strcasecmp(dataBuf, Settings.state_text[0])) {
-      payload = 0;
-    }
-    if ((GetCommandCode(command, sizeof(command), dataBuf, kOptionOn) >= 0) || !strcasecmp(dataBuf, Settings.state_text[1])) {
-      payload = 1;
-    }
-    if ((GetCommandCode(command, sizeof(command), dataBuf, kOptionToggle) >= 0) || !strcasecmp(dataBuf, Settings.state_text[2])) {
-      payload = 2;
-    }
-    if (GetCommandCode(command, sizeof(command), dataBuf, kOptionBlink) >= 0) {
-      payload = 3;
-    }
-    if (GetCommandCode(command, sizeof(command), dataBuf, kOptionBlinkOff) >= 0) {
-      payload = 4;
-    }
+    int temp_payload = GetStateNumber(dataBuf);
+    if (temp_payload > -1) { payload = temp_payload; }
 
 //    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Payload %d, Payload16 %d"), payload, payload16);
 //    AddLog(LOG_LEVEL_DEBUG);
 
     int command_code = GetCommandCode(command, sizeof(command), type, kTasmotaCommands);
-    if (CMND_BACKLOG == command_code) {
+    if (-1 == command_code) {
+      if (!XdrvCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
+        type = NULL;  // Unknown command
+      }
+    }
+    else if (CMND_BACKLOG == command_code) {
       if (data_len) {
         uint8_t bl_pointer = (!backlog_pointer) ? MAX_BACKLOG -1 : backlog_pointer;
         bl_pointer--;
         char *blcommand = strtok(dataBuf, ";");
         while ((blcommand != NULL) && (backlog_index != bl_pointer)) {
-          backlog[backlog_index] = String(blcommand);
-          backlog_index++;
-          if (backlog_index >= MAX_BACKLOG) backlog_index = 0;
+          while(true) {
+            while ((*blcommand != '\0') && (isblank(*blcommand))) { blcommand++; }  // Trim leading spaces
+            if (!strncasecmp_P(blcommand, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG))) {
+              blcommand += strlen(D_CMND_BACKLOG);                                  // Skip unnecessary command Backlog
+            } else {
+              break;
+            }
+          }
+          if (*blcommand != '\0') {
+            backlog[backlog_index] = String(blcommand);
+            backlog_index++;
+            if (backlog_index >= MAX_BACKLOG) backlog_index = 0;
+          }
           blcommand = strtok(NULL, ";");
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_APPENDED);
+//        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_APPENDED);
+        mqtt_data[0] = '\0';
       } else {
         uint8_t blflag = (backlog_pointer == backlog_index);
         backlog_pointer = backlog_index;
@@ -1073,12 +1071,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       I2cScan(mqtt_data, sizeof(mqtt_data));
     }
 #endif  // USE_I2C
-    else if (XdrvCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
-      // Serviced
-    }
-    else {
-      type = NULL;
-    }
+    else type = NULL;  // Unknown command
   }
   if (type == NULL) {
     blinks = 201;
@@ -2439,7 +2432,7 @@ void loop()
 
   if (millis() >= state_loop_timer) StateLoop();
 
-  SerialInput();
+  if (!serial_local) SerialInput();
 
 #ifdef USE_ARDUINO_OTA
   ArduinoOTA.handle();
