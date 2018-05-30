@@ -2086,9 +2086,11 @@ void SerialInput()
 /*-------------------------------------------------------------------------------------------*/
 
     if (serial_in_byte > 127) {                // binary data...
-      serial_in_byte_counter = 0;
-      Serial.flush();
-      return;
+      if((serial_in_byte != 179)){      
+        serial_in_byte_counter = 0;
+        Serial.flush();
+        return;
+      }      
     }
     if (!Settings.flag.mqtt_serial) {
       if (isprint(serial_in_byte)) {

@@ -195,7 +195,9 @@ char* Unescape(char* buffer, uint16_t* size)
           case 's': che = ' ';  break;   // 20 Space
           case 't': che = '\t'; break;   // 09 Horizontal tab
           case 'v': che = '\v'; break;   // 0B Vertical tab
-//          case '?': che = '\?'; break;   // 3F Question mark
+          case 'k': che = 0xB2; break;   // B2 Antriebe
+          case 'p': che = 0xB3; break;   // B3 Antriebe
+          //          case '?': che = '\?'; break;   // 3F Question mark
           default : {
             che = chi;
             *write++ = ch;

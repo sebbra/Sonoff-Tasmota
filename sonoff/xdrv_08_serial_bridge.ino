@@ -40,11 +40,13 @@ void SerialBridgeInput()
   while (SerialBridgeSerial->available()) {
     yield();
     uint8_t serial_in_byte = SerialBridgeSerial->read();
-
-    if (serial_in_byte > 127) {                   // binary data...
-      serial_bridge_in_byte_counter = 0;
-      SerialBridgeSerial->flush();
-      return;
+    
+    if (serial_in_byte > 127) {                // binary data...
+      if((serial_in_byte != 179)){      
+        serial_in_byte_counter = 0;
+        Serial.flush();
+        return;
+      }      
     }
     if (serial_in_byte) {
       if ((serial_in_byte_counter < sizeof(serial_bridge_buffer) -1) && (serial_in_byte != Settings.serial_delimiter)) {  // add char to string if it still fits
